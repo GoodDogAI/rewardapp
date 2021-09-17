@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -14,6 +15,25 @@ import java.io.InputStream
 import java.io.OutputStream
 import kotlin.system.exitProcess
 
+/**
+ * To connect phone to robot:
+ *
+ * on robot:
+ * - systemctl start bluetooth (<-- todo: make automatic)
+ * - sudo rfkill unblock bluetooth
+ * - sudo bluetoothctl
+ * - [bluetoothctl]> discoverable on
+ * - [bluetoothctl]> pairable on
+ * - [bluetoothctl]> trust $DEVICE_MAC
+ *
+ * on phone:
+ * - bluetooth settings
+ * - scan for devices
+ * - pick robot-*
+ *
+ * on robot:
+ * - [bluetoothctl]> discoverable off
+ */
 class MainActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -24,16 +44,20 @@ class MainActivity : AppCompatActivity() {
     }
     val pairedDevices = mBluetoothAdapter.bondedDevices
     val pairedDev: Array<Any> = pairedDevices.toTypedArray()
-    val mArrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, 0)
+    val mArrayAdapter = ArrayAdapter<BluetoothDevice>(this, android.R.layout.simple_list_item_1, 0)
     if (pairedDevices.size > 0) {
       for (device in pairedDevices) {
-        mArrayAdapter.add(device.getName() + "\n" + device.getAddress())
+        mArrayAdapter.add(device)
       }
     }
     val listView = findViewById<ListView>(R.id.PairedDevicesListView)
     listView.adapter = mArrayAdapter
-    val connectThread = ConnectThread(pairedDev.last() as BluetoothDevice)
-    connectThread.run()
+    listView.setOnItemClickListener { _, _, position, _ ->
+      val connectThread = ConnectThread(pairedDev[position] as BluetoothDevice)
+      connectThread.start()
+    }
+    //    val connectThread = ConnectThread(pairedDev.last() as BluetoothDevice)
+    //    connectThread.run()
     // connectThread.cancel()
   }
 
@@ -58,12 +82,17 @@ class MainActivity : AppCompatActivity() {
         return
       }
 
+      val connectedThread = ConnectedThread(mmSocket)
       // Do work to manage the connection (in a separate thread)
       // manageConnectedSocket(mmSocket);
       val bytes = ByteArray(1)
       bytes[0] = 97
-      val connectedThread = ConnectedThread(mmSocket)
-      connectedThread.write(bytes)
+      while (true) {
+        bytes[0] = ((bytes[0] - 97 + 1) % 26 + 97).toByte()
+        connectedThread.write(bytes)
+        sleep(250)
+        Log.w("RewardButton", "Sending " + bytes[0].toInt());
+      }
     }
 
     /** Will cancel an in-progress connection, and close the socket */
