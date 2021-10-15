@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit
 class DeviceActivity : AppCompatActivity() {
 
   @Volatile private var thread: ConnectThread? = null
+  @Volatile private var currentRepeatingMessage: Message = Messages.Heartbeat
   private val messages = LinkedBlockingDeque<Message>()
   private var start: Long = 0
 
@@ -24,6 +26,10 @@ class DeviceActivity : AppCompatActivity() {
       mapOf(
           R.id.btnBackward to Messages.MoveBackward,
           R.id.btnForward to Messages.MoveForward,
+      )
+
+  private val pressedMessageMap =
+      mapOf(
           R.id.btnLeft to Messages.MoveLeft,
           R.id.btnRight to Messages.MoveRight,
           R.id.btnReward to Messages.Reward,
@@ -32,6 +38,18 @@ class DeviceActivity : AppCompatActivity() {
 
   private fun onButtonClick(v: View) {
     messageMap[v.id]?.let { messages.push(it) }
+  }
+
+  private fun onButtonTouch(v: View, evt: MotionEvent): Boolean {
+    if (evt.action == MotionEvent.ACTION_DOWN) {
+      pressedMessageMap[v.id]?.let {
+        messages.push(it)
+        currentRepeatingMessage = it
+      }
+    } else if (evt.action == MotionEvent.ACTION_UP || evt.action == MotionEvent.ACTION_CANCEL) {
+      currentRepeatingMessage = Messages.Heartbeat
+    }
+    return true
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +61,9 @@ class DeviceActivity : AppCompatActivity() {
     start = System.nanoTime()
     thread = ConnectThread(device).apply(Thread::start)
     messageMap.keys.forEach { findViewById<Button>(it).setOnClickListener(this::onButtonClick) }
+    pressedMessageMap.keys.forEach {
+      findViewById<Button>(it).setOnTouchListener(this::onButtonTouch)
+    }
   }
 
   override fun onDestroy() {
@@ -74,7 +95,7 @@ class DeviceActivity : AppCompatActivity() {
       // manageConnectedSocket(mmSocket);
       val bytes = ByteArray(8)
       while (currentThread() == thread) {
-        val msg = messages.pollFirst(250, TimeUnit.MILLISECONDS) ?: Messages.Heartbeat
+        val msg = messages.pollFirst(250, TimeUnit.MILLISECONDS) ?: currentRepeatingMessage
 
         val counter = (System.nanoTime() - start).toInt()
         bytes[0] = (counter shl 24).toByte()
