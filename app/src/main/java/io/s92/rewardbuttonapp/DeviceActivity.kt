@@ -4,17 +4,35 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.os.Bundle
-import android.util.Log
+import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import kotlin.system.exitProcess
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.TimeUnit
 
 class DeviceActivity : AppCompatActivity() {
 
   @Volatile private var thread: ConnectThread? = null
+  private val messages = LinkedBlockingDeque<Message>()
+  private var start: Long = 0
+
+  private val messageMap =
+      mapOf(
+          R.id.btnBackward to MoveBackward,
+          R.id.btnForward to MoveForward,
+          R.id.btnLeft to MoveLeft,
+          R.id.btnRight to MoveRight,
+          R.id.btnReward to RewardMessage,
+          R.id.btnPunish to PunishMessage,
+      )
+
+  private fun onButtonClick(v: View) {
+    messageMap[v.id]?.let { messages.push(it) }
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -22,7 +40,9 @@ class DeviceActivity : AppCompatActivity() {
     val device = intent.getParcelableExtra<BluetoothDevice>(DEVICE_EXTRA)!!
     findViewById<TextView>(R.id.deviceNameView).text =
         "Connected to ${device.name} (${device.address})"
+    start = System.nanoTime()
     thread = ConnectThread(device).apply(Thread::start)
+    messageMap.keys.forEach { findViewById<Button>(it).setOnClickListener(this::onButtonClick) }
   }
 
   override fun onDestroy() {
@@ -31,7 +51,7 @@ class DeviceActivity : AppCompatActivity() {
   }
 
   companion object {
-    val DEVICE_EXTRA: String = "device"
+    const val DEVICE_EXTRA: String = "device"
   }
 
   private inner class ConnectThread(device: BluetoothDevice) : Thread() {
@@ -46,19 +66,28 @@ class DeviceActivity : AppCompatActivity() {
         try {
           mmSocket!!.close()
         } catch (closeException: IOException) {}
-        exitProcess(1)
+        finish()
       }
 
       val connectedThread = ConnectedThread(mmSocket)
       // Do work to manage the connection (in a separate thread)
       // manageConnectedSocket(mmSocket);
-      val bytes = ByteArray(1)
-      bytes[0] = 97
+      val bytes = ByteArray(8)
       while (currentThread() == thread) {
-        bytes[0] = ((bytes[0] - 97 + 1) % 26 + 97).toByte()
+        val msg = messages.pollFirst(250, TimeUnit.MILLISECONDS) ?: heartbeatMessage
+
+        val counter = (System.nanoTime() - start).toInt()
+        bytes[0] = (counter shl 24).toByte()
+        bytes[1] = (counter shl 16).toByte()
+        bytes[2] = (counter shl 8).toByte()
+        bytes[3] = counter.toByte()
+
+        bytes[4] = msg.discriminant
+        bytes[5] = msg.data
+        bytes[6] = 0x0
+        bytes[7] = 0x0
+
         connectedThread.write(bytes)
-        sleep(250)
-        Log.w("RewardButton", "Sending " + bytes[0].toInt())
       }
     }
 
