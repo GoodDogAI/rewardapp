@@ -22,12 +22,12 @@ class DeviceActivity : AppCompatActivity() {
 
   private val messageMap =
       mapOf(
-          R.id.btnBackward to MoveBackward,
-          R.id.btnForward to MoveForward,
-          R.id.btnLeft to MoveLeft,
-          R.id.btnRight to MoveRight,
-          R.id.btnReward to RewardMessage,
-          R.id.btnPunish to PunishMessage,
+          R.id.btnBackward to Messages.MoveBackward,
+          R.id.btnForward to Messages.MoveForward,
+          R.id.btnLeft to Messages.MoveLeft,
+          R.id.btnRight to Messages.MoveRight,
+          R.id.btnReward to Messages.Reward,
+          R.id.btnPunish to Messages.Punish,
       )
 
   private fun onButtonClick(v: View) {
@@ -74,7 +74,7 @@ class DeviceActivity : AppCompatActivity() {
       // manageConnectedSocket(mmSocket);
       val bytes = ByteArray(8)
       while (currentThread() == thread) {
-        val msg = messages.pollFirst(250, TimeUnit.MILLISECONDS) ?: heartbeatMessage
+        val msg = messages.pollFirst(250, TimeUnit.MILLISECONDS) ?: Messages.Heartbeat
 
         val counter = (System.nanoTime() - start).toInt()
         bytes[0] = (counter shl 24).toByte()
