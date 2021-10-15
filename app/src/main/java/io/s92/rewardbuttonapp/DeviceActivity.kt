@@ -98,9 +98,9 @@ class DeviceActivity : AppCompatActivity() {
         val msg = messages.pollFirst(250, TimeUnit.MILLISECONDS) ?: currentRepeatingMessage
 
         val counter = (System.nanoTime() - start).toInt()
-        bytes[0] = (counter shl 24).toByte()
-        bytes[1] = (counter shl 16).toByte()
-        bytes[2] = (counter shl 8).toByte()
+        bytes[0] = (counter shr 24).toByte()
+        bytes[1] = (counter shr 16).toByte()
+        bytes[2] = (counter shr 8).toByte()
         bytes[3] = counter.toByte()
 
         bytes[4] = msg.discriminant
