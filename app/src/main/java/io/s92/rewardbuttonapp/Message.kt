@@ -15,6 +15,6 @@ object Messages {
 
   private fun score(reward: Byte) = Message(0x02, reward)
 
-  val Reward = score(-1)
-  val Punish = score(1)
+  val Reward = score(1)
+  val Punish = score(-1)
 }
