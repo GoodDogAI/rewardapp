@@ -24,16 +24,16 @@ class DeviceActivity : AppCompatActivity() {
 
   private val messageMap =
       mapOf(
-          R.id.btnBackward to Messages.MoveBackward,
-          R.id.btnForward to Messages.MoveForward,
+          R.id.btnReward to Messages.Reward,
+          R.id.btnPunish to Messages.Punish,
       )
 
   private val pressedMessageMap =
       mapOf(
           R.id.btnLeft to Messages.MoveLeft,
           R.id.btnRight to Messages.MoveRight,
-          R.id.btnReward to Messages.Reward,
-          R.id.btnPunish to Messages.Punish,
+          R.id.btnBackward to Messages.MoveBackward,
+          R.id.btnForward to Messages.MoveForward,
       )
 
   private fun onButtonClick(v: View) {
