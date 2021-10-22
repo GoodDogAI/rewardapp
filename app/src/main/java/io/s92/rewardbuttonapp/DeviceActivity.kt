@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.*
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 
@@ -19,6 +20,8 @@ class DeviceActivity : AppCompatActivity() {
 
   @Volatile private var thread: ConnectThread? = null
   @Volatile private var currentRepeatingMessage: Message = Messages.Heartbeat
+  @Volatile
+  private var currentDirection: EnumSet<MoveDirection> = EnumSet.noneOf(MoveDirection::class.java)
   private val messages = LinkedBlockingDeque<Message>()
   private var start: Long = 0
 
@@ -30,10 +33,10 @@ class DeviceActivity : AppCompatActivity() {
 
   private val pressedMessageMap =
       mapOf(
-          R.id.btnLeft to Messages.MoveLeft,
-          R.id.btnRight to Messages.MoveRight,
-          R.id.btnBackward to Messages.MoveBackward,
-          R.id.btnForward to Messages.MoveForward,
+          R.id.btnLeft to MoveDirection.Left,
+          R.id.btnRight to MoveDirection.Right,
+          R.id.btnBackward to MoveDirection.Backward,
+          R.id.btnForward to MoveDirection.Forward,
       )
 
   private fun onButtonClick(v: View) {
@@ -41,16 +44,22 @@ class DeviceActivity : AppCompatActivity() {
   }
 
   private fun onButtonTouch(v: View, evt: MotionEvent): Boolean {
-    if (evt.action == MotionEvent.ACTION_DOWN) {
-      pressedMessageMap[v.id]?.let {
-        messages.push(it)
-        currentRepeatingMessage = it
-      }
-    } else if (evt.action == MotionEvent.ACTION_UP || evt.action == MotionEvent.ACTION_CANCEL) {
-      messages.push(Messages.StopMoving)
-      currentRepeatingMessage = Messages.Heartbeat
+    pressedMessageMap[v.id]?.let {
+      toggleMoveDirection(
+          it,
+          if (evt.action == MotionEvent.ACTION_DOWN) true
+          else if (evt.action == MotionEvent.ACTION_UP || evt.action == MotionEvent.ACTION_CANCEL)
+              false
+          else return@let,
+      )
     }
     return true
+  }
+
+  private fun toggleMoveDirection(dir: MoveDirection, value: Boolean) {
+    if (value) currentDirection.add(dir) else currentDirection.remove(dir)
+    currentRepeatingMessage =
+        if (currentDirection.isEmpty()) Messages.Heartbeat else Messages.Move(currentDirection)
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
