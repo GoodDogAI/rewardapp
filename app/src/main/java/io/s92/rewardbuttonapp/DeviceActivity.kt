@@ -47,6 +47,7 @@ class DeviceActivity : AppCompatActivity() {
         currentRepeatingMessage = it
       }
     } else if (evt.action == MotionEvent.ACTION_UP || evt.action == MotionEvent.ACTION_CANCEL) {
+      messages.push(Messages.StopMoving)
       currentRepeatingMessage = Messages.Heartbeat
     }
     return true

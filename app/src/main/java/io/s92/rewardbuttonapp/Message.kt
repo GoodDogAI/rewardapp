@@ -8,6 +8,7 @@ object Messages {
 
   private fun move(data: Byte) = Message(0x01, data)
 
+  val StopMoving = move(0x0)
   val MoveForward = move(0x01)
   val MoveBackward = move(0x02)
   val MoveLeft = move(0x04)
