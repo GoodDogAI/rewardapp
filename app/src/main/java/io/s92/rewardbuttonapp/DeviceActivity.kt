@@ -123,7 +123,7 @@ class DeviceActivity : AppCompatActivity() {
     }
   }
 
-  private class ConnectedThread(private val mmSocket: BluetoothSocket?) : Thread() {
+  private inner class ConnectedThread(private val mmSocket: BluetoothSocket?) : Thread() {
     private val mmInStream: InputStream?
     private val mmOutStream: OutputStream?
     override fun run() {
@@ -148,14 +148,18 @@ class DeviceActivity : AppCompatActivity() {
     fun write(bytes: ByteArray?) {
       try {
         mmOutStream!!.write(bytes)
-      } catch (e: IOException) {}
+      } catch (e: IOException) {
+        finish()
+      }
     }
 
     /* Call this from the main activity to shutdown the connection */
     fun cancel() {
       try {
         mmSocket!!.close()
-      } catch (e: IOException) {}
+      } catch (e: IOException) {
+        finish()
+      }
     }
 
     init {
