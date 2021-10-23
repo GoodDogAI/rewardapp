@@ -1,7 +1,7 @@
 package io.s92.rewardbuttonapp
 
 import java.util.*
-import kotlin.experimental.and
+import kotlin.experimental.or
 
 class Message(val discriminant: Byte, val data: Byte = 0x0)
 
@@ -29,7 +29,7 @@ object Messages {
   fun Move(direction: EnumSet<MoveDirection>): Message {
     return move(
         directionMap.entries.fold(0x0.toByte()) { acc, entry ->
-          if (direction.contains(entry.key)) (acc and entry.value) else acc
+          if (direction.contains(entry.key)) (acc or entry.value) else acc
         })
   }
 
