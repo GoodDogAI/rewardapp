@@ -58,6 +58,7 @@ class DeviceActivity : AppCompatActivity() {
 
   private fun toggleMoveDirection(dir: MoveDirection, value: Boolean) {
     if (value) currentDirection.add(dir) else currentDirection.remove(dir)
+    messages.push(Messages.Move(currentDirection))
     currentRepeatingMessage =
         if (currentDirection.isEmpty()) Messages.Heartbeat else Messages.Move(currentDirection)
   }
