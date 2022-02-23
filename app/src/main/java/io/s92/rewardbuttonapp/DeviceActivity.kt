@@ -31,28 +31,28 @@ class DeviceActivity : AppCompatActivity() {
           R.id.btnPunish to Messages.Punish,
       )
 
-  private val pressedMessageMap =
-      mapOf(
-          R.id.btnLeft to MoveDirection.Left,
-          R.id.btnRight to MoveDirection.Right,
-          R.id.btnBackward to MoveDirection.Backward,
-          R.id.btnForward to MoveDirection.Forward,
-      )
+//  private val pressedMessageMap =
+//      mapOf(
+//          R.id.btnLeft to MoveDirection.Left,
+//          R.id.btnRight to MoveDirection.Right,
+//          R.id.btnBackward to MoveDirection.Backward,
+//          R.id.btnForward to MoveDirection.Forward,
+//      )
 
   private fun onButtonClick(v: View) {
     messageMap[v.id]?.let { messages.push(it) }
   }
 
   private fun onButtonTouch(v: View, evt: MotionEvent): Boolean {
-    pressedMessageMap[v.id]?.let {
-      toggleMoveDirection(
-          it,
-          if (evt.action == MotionEvent.ACTION_DOWN) true
-          else if (evt.action == MotionEvent.ACTION_UP || evt.action == MotionEvent.ACTION_CANCEL)
-              false
-          else return@let,
-      )
-    }
+//    pressedMessageMap[v.id]?.let {
+//      toggleMoveDirection(
+//          it,
+//          if (evt.action == MotionEvent.ACTION_DOWN) true
+//          else if (evt.action == MotionEvent.ACTION_UP || evt.action == MotionEvent.ACTION_CANCEL)
+//              false
+//          else return@let,
+//      )
+//    }
     return true
   }
 
@@ -72,9 +72,9 @@ class DeviceActivity : AppCompatActivity() {
     start = System.nanoTime()
     thread = ConnectThread(device).apply(Thread::start)
     messageMap.keys.forEach { findViewById<Button>(it).setOnClickListener(this::onButtonClick) }
-    pressedMessageMap.keys.forEach {
-      findViewById<Button>(it).setOnTouchListener(this::onButtonTouch)
-    }
+//    pressedMessageMap.keys.forEach {
+//      findViewById<Button>(it).setOnTouchListener(this::onButtonTouch)
+//    }
   }
 
   override fun onDestroy() {

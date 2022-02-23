@@ -1,0 +1,7 @@
+<resources>
+    <declare-styleable name="JoystickView">
+        <attr name="circleColor" format="color" />
+        <attr name="targetColor" format="color" />
+        <attr name="exampleDrawable" format="color|reference" />
+    </declare-styleable>
+</resources>
