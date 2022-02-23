@@ -7,17 +7,27 @@ import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.text.TextPaint
 import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.MotionEvent
 import android.view.View
+import kotlin.math.min
 
 /**
  * Allows user to control an analog joystick
  */
 class JoystickView : View {
-
     private var _circleColor: Int = Color.RED
     private var _targetColor: Int = Color.GREEN
 
     private lateinit var circlePaint: Paint
+    private lateinit var inactiveTargetPaint: Paint
+    private lateinit var targetPaint: Paint
+
+    private var _active: Boolean = false
+    private var _mX: Float = 0.0F
+    private var _mY: Float = 0.0F
+
+
 
     // Color of background circle that you can press
     var circleColor: Int
@@ -85,6 +95,20 @@ class JoystickView : View {
         // Set up a default TextPaint object
         circlePaint = Paint().apply {
             color = circleColor
+            strokeWidth = 10.0F
+            style = Paint.Style.STROKE
+        }
+
+        inactiveTargetPaint = Paint().apply {
+            color = Color.GRAY
+            strokeWidth = 10.0F
+            style = Paint.Style.STROKE
+        }
+
+        targetPaint = Paint().apply {
+            color = targetColor
+            strokeWidth = 10.0F
+            style = Paint.Style.STROKE
         }
 
         // Update TextPaint and text measurements from attributes
@@ -92,41 +116,55 @@ class JoystickView : View {
     }
 
     private fun invalidateTextPaintAndMeasurements() {
-//        textPaint.let {
-//            it.textSize = exampleDimension
-//            it.color = exampleColor
-//            textWidth = it.measureText(exampleString)
-//            textHeight = it.fontMetrics.bottom
-//        }
-
         circlePaint.let {
             it.color = circleColor
+        }
+
+        targetPaint.let {
+            it.color = targetColor
         }
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        // TODO: consider storing these as member variables to reduce
-        // allocations per draw cycle.
-        val paddingLeft = paddingLeft
-        val paddingTop = paddingTop
-        val paddingRight = paddingRight
-        val paddingBottom = paddingBottom
+        val centerX = (width / 2).toFloat()
+        val centerY = (height / 2).toFloat()
+        val radius = min(width, height) / 2 * 0.95F
+        val targetRadius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, 8.0F, resources.displayMetrics)
 
-        val contentWidth = width - paddingLeft - paddingRight
-        val contentHeight = height - paddingTop - paddingBottom
+        canvas.drawCircle(centerX, centerY, radius, circlePaint);
+        canvas.drawLine(centerX, 0.0F, centerX, height.toFloat(), circlePaint);
+        canvas.drawLine(0.0F, centerY, width.toFloat(), centerY, circlePaint);
 
-        canvas.drawCircle((width / 2).toFloat(), (height / 2).toFloat(), width.toFloat(), circlePaint);
-
-
-        // Draw the example drawable on top of the text.
-        exampleDrawable?.let {
-            it.setBounds(
-                paddingLeft, paddingTop,
-                paddingLeft + contentWidth, paddingTop + contentHeight
-            )
-            it.draw(canvas)
+        if (_active) {
+            canvas.drawCircle(_mX, _mY, targetRadius, targetPaint)
         }
+        else {
+            canvas.drawCircle(centerX, centerY, targetRadius, inactiveTargetPaint)
+        }
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        if (event == null) {
+            return false
+        }
+
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            _active = true
+            _mX = event.x
+            _mY = event.y
+        }
+        else if (event.action == MotionEvent.ACTION_UP) {
+            _active = false
+        }
+        else if (event.action == MotionEvent.ACTION_MOVE) {
+            _mX = event.x
+            _mY = event.y
+        }
+
+
+        invalidate()
+        return true
     }
 }
