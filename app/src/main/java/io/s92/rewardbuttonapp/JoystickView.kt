@@ -12,9 +12,10 @@ import android.view.MotionEvent
 import android.view.View
 import java.lang.Float.max
 import kotlin.math.PI
-import kotlin.math.min
 import kotlin.math.atan2
+import kotlin.math.min
 import kotlin.math.sqrt
+import kotlin.reflect.KFunction2
 
 /**
  * Allows user to control an analog joystick
@@ -22,6 +23,10 @@ import kotlin.math.sqrt
 class JoystickView : View {
     private var _circleColor: Int = Color.RED
     private var _targetColor: Int = Color.GREEN
+
+
+    var onJoystick: (linear_x: Float, angular_z: Float) -> Unit = { fl: Float, fl1: Float -> } // listener with default implementation without params and returns Unit
+
 
     private lateinit var circlePaint: Paint
     private lateinit var inactiveTargetPaint: Paint
@@ -53,11 +58,11 @@ class JoystickView : View {
 
 
             if (_mY < height / 2)
-                return magnitude * (atan2(clamp((_mY - (height / 2)) / (height / 2)),
-                                         clamp((_mX - (width / 2)) / (height / 2))) + PI.toFloat() / 2.0F)
+                return magnitude * -(atan2(clamp((_mY - (height / 2)) / (height / 2)),
+                                          clamp((_mX - (width / 2)) / (height / 2))) + PI.toFloat() / 2.0F)
             else
-                return magnitude * (atan2(clamp(-(_mY - (height / 2)) / (height / 2)),
-                                         clamp((_mX - (width / 2)) / (height / 2))) + PI.toFloat() / 2.0F)
+                return magnitude * -(atan2(clamp(-(_mY - (height / 2)) / (height / 2)),
+                                          clamp((_mX - (width / 2)) / (height / 2))) + PI.toFloat() / 2.0F)
         }
 
     // Color of background circle that you can press
@@ -154,6 +159,7 @@ class JoystickView : View {
         invalidateTextPaintAndMeasurements()
     }
 
+
     private fun invalidateTextPaintAndMeasurements() {
         circlePaint.let {
             it.color = circleColor
@@ -205,6 +211,7 @@ class JoystickView : View {
             _mY = event.y
         }
 
+        onJoystick(ros_linear_x, ros_angular_z)
 
         invalidate()
         return true

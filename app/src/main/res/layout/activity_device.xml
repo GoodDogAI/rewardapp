@@ -44,7 +44,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <io.s92.rewardbuttonapp.JoystickView
-        android:id="@+id/joystickView2"
+        android:id="@+id/joystick"
         android:layout_width="300dp"
         android:layout_height="300dp"
         app:layout_constraintBottom_toBottomOf="parent"

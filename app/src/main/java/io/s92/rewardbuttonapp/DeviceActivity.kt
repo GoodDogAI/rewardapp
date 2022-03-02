@@ -12,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.*
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 
@@ -20,8 +19,6 @@ class DeviceActivity : AppCompatActivity() {
 
   @Volatile private var thread: ConnectThread? = null
   @Volatile private var currentRepeatingMessage: Message = Messages.Heartbeat
-  @Volatile
-  private var currentDirection: EnumSet<MoveDirection> = EnumSet.noneOf(MoveDirection::class.java)
   private val messages = LinkedBlockingDeque<Message>()
   private var start: Long = 0
 
@@ -56,11 +53,18 @@ class DeviceActivity : AppCompatActivity() {
     return true
   }
 
-  private fun toggleMoveDirection(dir: MoveDirection, value: Boolean) {
-    if (value) currentDirection.add(dir) else currentDirection.remove(dir)
-    messages.push(Messages.Move(currentDirection))
+//  private fun toggleMoveDirection(dir: MoveDirection, value: Boolean) {
+//    if (value) currentDirection.add(dir) else currentDirection.remove(dir)
+//    messages.push(Messages.Move(currentDirection))
+//    currentRepeatingMessage =
+//        if (currentDirection.isEmpty()) Messages.Heartbeat else Messages.Move(currentDirection)
+//  }
+
+  private fun onJoystick(linear_x: Float, angular_z: Float): Unit {
+    val moveMsg = Messages.Move(linear_x, angular_z)
+    messages.push(moveMsg)
     currentRepeatingMessage =
-        if (currentDirection.isEmpty()) Messages.Heartbeat else Messages.Move(currentDirection)
+        if (!findViewById<JoystickView>(R.id.joystick).active) Messages.Heartbeat else moveMsg
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +76,8 @@ class DeviceActivity : AppCompatActivity() {
     start = System.nanoTime()
     thread = ConnectThread(device).apply(Thread::start)
     messageMap.keys.forEach { findViewById<Button>(it).setOnClickListener(this::onButtonClick) }
+
+    findViewById<JoystickView>(R.id.joystick).onJoystick = this::onJoystick
 //    pressedMessageMap.keys.forEach {
 //      findViewById<Button>(it).setOnTouchListener(this::onButtonTouch)
 //    }
@@ -116,7 +122,7 @@ class DeviceActivity : AppCompatActivity() {
 
         bytes[4] = msg.discriminant
         bytes[5] = msg.data
-        bytes[6] = 0x0
+        bytes[6] = msg.extra_data
         bytes[7] = 0x0
 
         connectedThread.write(bytes)
