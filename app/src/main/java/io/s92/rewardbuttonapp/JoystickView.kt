@@ -10,7 +10,11 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
+import java.lang.Float.max
+import kotlin.math.PI
 import kotlin.math.min
+import kotlin.math.atan2
+import kotlin.math.sqrt
 
 /**
  * Allows user to control an analog joystick
@@ -22,12 +26,39 @@ class JoystickView : View {
     private lateinit var circlePaint: Paint
     private lateinit var inactiveTargetPaint: Paint
     private lateinit var targetPaint: Paint
+    private lateinit var debugTextPaint: TextPaint
 
     private var _active: Boolean = false
     private var _mX: Float = 0.0F
     private var _mY: Float = 0.0F
 
+    val active: Boolean
+        get() = _active
 
+    val ros_linear_x: Float
+        get() {
+            if (!active)
+                return 0.0F
+
+            return clamp(-(_mY - (height / 2)) / (height / 2))
+        }
+
+    val ros_angular_z: Float
+        get() {
+            if (!active)
+                return 0.0F
+
+            val magnitude = sqrt((_mY - (height / 2)) / (height / 2) * (_mY - (height / 2)) / (height / 2) +
+                                    (_mX - (width / 2)) / (height / 2) * (_mX - (width / 2)) / (height / 2))
+
+
+            if (_mY < height / 2)
+                return magnitude * (atan2(clamp((_mY - (height / 2)) / (height / 2)),
+                                         clamp((_mX - (width / 2)) / (height / 2))) + PI.toFloat() / 2.0F)
+            else
+                return magnitude * (atan2(clamp(-(_mY - (height / 2)) / (height / 2)),
+                                         clamp((_mX - (width / 2)) / (height / 2))) + PI.toFloat() / 2.0F)
+        }
 
     // Color of background circle that you can press
     var circleColor: Int
@@ -45,6 +76,9 @@ class JoystickView : View {
             invalidateTextPaintAndMeasurements()
         }
 
+    private fun clamp(value: Float) : Float {
+        return max(-1.0F, min(1.0F, value))
+    }
 
     /**
      * In the example view, this drawable is drawn above the text.
@@ -111,6 +145,11 @@ class JoystickView : View {
             style = Paint.Style.STROKE
         }
 
+        debugTextPaint = TextPaint().apply {
+            color = Color.BLACK
+            textSize = 40.0F
+        }
+
         // Update TextPaint and text measurements from attributes
         invalidateTextPaintAndMeasurements()
     }
@@ -136,6 +175,9 @@ class JoystickView : View {
         canvas.drawCircle(centerX, centerY, radius, circlePaint);
         canvas.drawLine(centerX, 0.0F, centerX, height.toFloat(), circlePaint);
         canvas.drawLine(0.0F, centerY, width.toFloat(), centerY, circlePaint);
+
+        canvas.drawText(ros_linear_x.toString(), 0.0F, 50.0F, debugTextPaint)
+        canvas.drawText(ros_angular_z.toString(), 0.0F, 100.0F, debugTextPaint)
 
         if (_active) {
             canvas.drawCircle(_mX, _mY, targetRadius, targetPaint)
