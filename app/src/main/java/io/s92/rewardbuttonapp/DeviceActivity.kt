@@ -3,7 +3,11 @@ package io.s92.rewardbuttonapp
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
@@ -37,6 +41,10 @@ class DeviceActivity : AppCompatActivity() {
 //      )
 
   private fun onButtonClick(v: View) {
+    val vib = applicationContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      vib.vibrate(VibrationEffect.createPredefined( VibrationEffect.EFFECT_HEAVY_CLICK) )
+    }
     messageMap[v.id]?.let { messages.push(it) }
   }
 
